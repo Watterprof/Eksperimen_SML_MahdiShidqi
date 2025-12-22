@@ -1,0 +1,2 @@
+*.csv filter=lfs diff=lfs merge=lfs -text
+telco_preprocessed/telco_preprocessed.csv filter=lfs diff=lfs merge=lfs -text
