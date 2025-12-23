@@ -1,2 +1,5 @@
-!.gitignore
-!requirements.txt
+mlruns/
+mlflow.db
+tmp_artifacts/
+__pycache__/
+.ipynb_checkpoints/
