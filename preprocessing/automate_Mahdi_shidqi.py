@@ -1,59 +1,42 @@
-import os
-import pandas as pd
 from pathlib import Path
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
 
+BASE_DIR = Path(__file__).resolve().parents[1]
 
-from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from sklearn.impute import SimpleImputer
+RAW_PATH = BASE_DIR / "telco_raw.csv"   
+OUTPUT_PATH = BASE_DIR / "preprocessing" / "telco_preprocessed.csv"
 
-BASE_DIR = Path(__file__).resolve().parents[1]  
-RAW_PATH = BASE_DIR / "telco_raw.csv"
-OUT_PATH = BASE_DIR / "preprocessing" / "telco_preprocessed.csv"
-
-def run():
+def run_preprocessing():
+    print("Load dataset from:", RAW_PATH)
     df = pd.read_csv(RAW_PATH)
 
-    df = df.drop_duplicates().copy()
+    print("Initial shape:", df.shape)
+
+    df = df.drop_duplicates()
 
     if "TotalCharges" in df.columns:
         df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors="coerce")
+        df["TotalCharges"] = df["TotalCharges"].fillna(df["TotalCharges"].median())
 
     if "Churn" not in df.columns:
-        raise ValueError("Kolom 'Churn' tidak ditemukan. Pastikan dataset telco churn yang benar.")
-    y = (df["Churn"] == "Yes").astype(int)
-    X = df.drop(columns=["Churn"])
+        raise ValueError("Kolom target 'Churn' tidak ditemukan")
 
-    num_cols = X.select_dtypes(include=["int64","float64"]).columns.tolist()
-    cat_cols = X.select_dtypes(include=["object","bool"]).columns.tolist()
+    df["Churn"] = df["Churn"].map({"Yes": 1, "No": 0})
 
-    num_pipe = Pipeline([
-        ("imputer", SimpleImputer(strategy="median")),
-        ("scaler", StandardScaler()),
-    ])
+    cat_cols = df.select_dtypes(include=["object"]).columns
+    num_cols = df.select_dtypes(include=["int64", "float64"]).columns
 
-    cat_pipe = Pipeline([
-        ("imputer", SimpleImputer(strategy="most_frequent")),
-        ("ohe", OneHotEncoder(handle_unknown="ignore")),
-    ])
+    df_encoded = pd.get_dummies(df, columns=cat_cols, drop_first=True)
 
-    preprocessor = ColumnTransformer([
-        ("num", num_pipe, num_cols),
-        ("cat", cat_pipe, cat_cols),
-    ])
+    scaler = StandardScaler()
+    df_encoded[num_cols] = scaler.fit_transform(df_encoded[num_cols])
 
-    X_prep = preprocessor.fit_transform(X)
+    df_encoded.to_csv(OUTPUT_PATH, index=False)
 
-    X_dense = X_prep.toarray() if hasattr(X_prep, "toarray") else X_prep
-    df_out = pd.DataFrame(X_dense)
-    df_out["target"] = y.values
-
-    os.makedirs(os.path.dirname(OUT_PATH), exist_ok=True)
-    df_out.to_csv(OUT_PATH, index=False)
-
-    print(f"Saved preprocessed dataset to: {OUT_PATH}")
-    print("Shape:", df_out.shape)
+    print("Preprocessing selesai.")
+    print("Final shape:", df_encoded.shape)
+    print("Saved to:", OUTPUT_PATH)
 
 if __name__ == "__main__":
-    run()
+    run_preprocessing()
