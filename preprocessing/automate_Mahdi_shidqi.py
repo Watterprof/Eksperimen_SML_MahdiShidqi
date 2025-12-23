@@ -1,13 +1,16 @@
 import os
 import pandas as pd
+from pathlib import Path
+
 
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.impute import SimpleImputer
 
-RAW_PATH = "telco_raw/WA_Fn-UseC_-Telco-Customer-Churn.csv"
-OUT_PATH = "telco_preprocessed/telco_preprocessed.csv"
+BASE_DIR = Path(__file__).resolve().parents[1]  
+RAW_PATH = BASE_DIR / "telco_raw.csv"
+OUT_PATH = BASE_DIR / "preprocessing" / "telco_preprocessed.csv"
 
 def run():
     df = pd.read_csv(RAW_PATH)
@@ -49,7 +52,7 @@ def run():
     os.makedirs(os.path.dirname(OUT_PATH), exist_ok=True)
     df_out.to_csv(OUT_PATH, index=False)
 
-    print(f"✅ Saved preprocessed dataset to: {OUT_PATH}")
+    print(f"Saved preprocessed dataset to: {OUT_PATH}")
     print("Shape:", df_out.shape)
 
 if __name__ == "__main__":
