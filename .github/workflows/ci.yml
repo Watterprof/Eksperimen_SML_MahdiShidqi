@@ -26,6 +26,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run training / script
+      - name: Run preprocessing
         run: |
-          python modelling.py
+          python preprocessing/automate_Mahdi_shidqi.py
